@@ -1,0 +1,15 @@
+{
+  "name": "tech-match-workflow-backend",
+  "version": "1.0.0",
+  "description": "Business Jarvis - AI IT Communications Assistant",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "npx nodemon --exec npx ts-node src/server-demo.ts",
+    "dev-full": "npx nodemon --exec npx ts-node src/server.ts",
+    "build": "npx tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": ["business-jarvis", "workflow", "enterprise"],
+  "author": "Tech Match",
+  "license": "MIT"
+}

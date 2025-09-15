@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Users and Organizations
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  domain    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  workflows Workflow[]
+  @@map("organizations")
+}
+
+model User {
+  id             String  @id @default(cuid())
+  email          String  @unique
+  name           String
+  hashedPassword String
+  role           String  @default("USER") // SQLite doesn't have enums
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  workflowRuns WorkflowRun[]
+  @@map("users")
+}
+
+// Workflows and Executions
+model Workflow {
+  id             String  @id @default(cuid())
+  name           String
+  description    String?
+  isActive       Boolean @default(true)
+  definition     String  // JSON as string in SQLite
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  runs         WorkflowRun[]
+  @@map("workflows")
+}
+
+model WorkflowRun {
+  id         String      @id @default(cuid())
+  workflowId String
+  userId     String
+  status     String      @default("PENDING")
+  startedAt  DateTime    @default(now())
+  finishedAt DateTime?
+  input      String?     // JSON as string
+  output     String?     // JSON as string
+  error      String?
+
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  steps    WorkflowStep[]
+  @@map("workflow_runs")
+}
+
+model WorkflowStep {
+  id            String     @id @default(cuid())
+  workflowRunId String
+  stepName      String
+  status        String     @default("PENDING")
+  startedAt     DateTime   @default(now())
+  finishedAt    DateTime?
+  input         String?    // JSON as string
+  output        String?    // JSON as string
+  error         String?
+
+  // Relations
+  workflowRun WorkflowRun @relation(fields: [workflowRunId], references: [id])
+  @@map("workflow_steps")
+}

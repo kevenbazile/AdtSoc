@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: business_jarvis
+      POSTGRES_USER: jarvis
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Redis for job queues
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # Business Jarvis Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://jarvis:${DB_PASSWORD:-secure_password}@postgres:5432/business_jarvis"
+      REDIS_URL: "redis://redis:6379"
+      JWT_SECRET: ${JWT_SECRET:-change_this_in_production}
+      NODE_ENV: production
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  # Business Jarvis Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:5000/api"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
